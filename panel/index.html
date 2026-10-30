@@ -155,7 +155,24 @@
 
         <div class="card">
           <div class="card-head">
-            <div><div class="card-title">局域网访问</div><div class="hint">只开放 /v1；面板和 /api 永远只认本机</div></div>
+            <div>
+              <div class="card-title">面板远程访问</div>
+              <div class="hint">默认只有本机能打开面板；打开后任何能连到这台机器的地方都能访问（仍需密码）</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="remotePanelToggle" /><span class="sl"></span></label>
+          </div>
+          <div class="hint" id="remotePanelInfo" style="margin-top:10px">—</div>
+          <div class="row" style="margin-top:14px">
+            <input type="password" id="pwdCurrent" placeholder="当前密码" style="width:150px" />
+            <input type="password" id="pwdNext" placeholder="新密码（至少 6 位）" style="width:180px" />
+            <button class="btn" id="changePwd">修改密码</button>
+          </div>
+          <div class="hint" style="margin-top:8px">默认密码 admin123。公网暴露前务必改掉，并尽量在前面套一层 HTTPS。</div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div><div class="card-title">局域网访问</div><div class="hint">只开放 /v1；面板是否可达看上面那个开关</div></div>
             <label class="switch"><input type="checkbox" id="lanToggle" /><span class="sl"></span></label>
           </div>
           <div class="hint" id="lanInfo" style="margin-top:10px">—</div>

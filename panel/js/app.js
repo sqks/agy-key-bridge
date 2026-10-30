@@ -27,6 +27,7 @@ function paintAll() {
   renderAccounts();
   renderQuota();
   renderRelay();
+  renderRemotePanel();
 }
 
 /** 首屏：并行拉数据再统一画，避免多次闪烁。 */
@@ -152,6 +153,47 @@ $('reloadModels').addEventListener('click', async () => {
     toast('清单已刷新');
   } catch (err) {
     toast(`刷新失败：${err.message}`, true);
+  }
+});
+
+// ---------------------------------------------------------------- 面板远程访问
+
+/** 渲染远程访问开关与状态说明。 */
+function renderRemotePanel() {
+  const status = store.status;
+  if (!status) return;
+  const on = Boolean(status.allowRemotePanel);
+  $('remotePanelToggle').checked = on;
+  $('remotePanelInfo').textContent = on
+    ? '已允许远程打开面板。当前来源若不在本机，请确认这条链路有 HTTPS。'
+    : '仅本机（127.0.0.1）能打开面板；/v1 不受这个开关影响。';
+  $('remotePanelInfo').style.color = on ? '#b45309' : '';
+}
+
+$('remotePanelToggle').addEventListener('change', async (event) => {
+  const enabled = event.target.checked;
+  try {
+    await api('/api/panel-access', { method: 'POST', body: JSON.stringify({ enabled }) });
+    await loadStatus();
+    renderRemotePanel();
+    toast(enabled ? '已允许远程访问面板' : '面板已收回本机');
+  } catch (err) {
+    toast('切换失败：' + err.message, true);
+    event.target.checked = !enabled;
+  }
+});
+
+$('changePwd').addEventListener('click', async () => {
+  const current = $('pwdCurrent').value;
+  const next = $('pwdNext').value;
+  if (!current || !next) { toast('当前密码和新密码都要填', true); return; }
+  if (next.length < 6) { toast('新密码至少 6 位', true); return; }
+  try {
+    await api('/api/auth/password', { method: 'POST', body: JSON.stringify({ current, next }) });
+    toast('密码已修改，请重新登录');
+    setTimeout(() => location.replace('/login'), 800);
+  } catch (err) {
+    toast('修改失败：' + err.message, true);
   }
 });
 
