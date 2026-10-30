@@ -74,20 +74,6 @@ function safeEqual(a = '', b = '') {
   return crypto.timingSafeEqual(ba, bb);
 }
 
-function isLoopback(req) {
-  const addr = req.socket.remoteAddress || '';
-  return addr === '127.0.0.1' || addr === '::1' || addr === '::ffff:127.0.0.1';
-}
-
-/**
- * 面板是否可以访问。
- * 默认只认回环；allowRemotePanel 打开后任何来源都能进来，但面板本身有密码门，
- * 所以这里放开的是"网络可达"，不是"免登录"。公网部署请务必配合 HTTPS。
- */
-function panelAllowed(req) {
-  return isLoopback(req) || Boolean(state.allowRemotePanel);
-}
-
 function readBody(req, limit = 8 * 1024 * 1024) {
   return new Promise((resolve, reject) => {
     const chunks = [];
@@ -288,7 +274,6 @@ async function statusPayload() {
     ok: true,
     version: VERSION,
     proxyEnabled: state.proxyEnabled,
-    allowRemotePanel: Boolean(state.allowRemotePanel),
     execMode: Boolean(state.execMode),
     autostart: state.autostart,
     autostartRegistered: autostartInstalled(true),
@@ -603,13 +588,6 @@ async function handleAnthropicMessages(req, res) {
 }
 
 async function handleApi(req, res, url) {
-  // 面板永远只对回环开放：跨机接入只走 /v1，那里有 api key 兜底
-  if (!panelAllowed(req)) {
-    return sendJson(res, 403, {
-      ok: false,
-      error: 'panel is loopback-only; enable remote panel access or use /v1 with your api key',
-    });
-  }
   const route = url.pathname;
 
   // ---------------------------------------------------------------- 面板登录
@@ -627,26 +605,6 @@ async function handleApi(req, res, url) {
   if (route === '/api/auth/logout' && req.method === 'POST') {
     res.setHeader('set-cookie', clearCookie());
     return sendJson(res, 200, { ok: true });
-  }
-
-  if (route === '/api/panel-access' && req.method === 'POST') {
-    const body = await readBody(req);
-    const enabled = Boolean(body.enabled);
-    const wasLan = Boolean(state.lanAccess);
-
-    // 要远程访问面板，服务必须监听 0.0.0.0；只开 allowRemotePanel 而没开监听，
-    // 外面的连接根本到不了这台机器。所以这里把两件事绑在一起做。
-    updateState({
-      allowRemotePanel: enabled,
-      ...(enabled ? { lanAccess: true } : {}),
-    });
-    log(`remote panel access ${enabled ? 'enabled' : 'disabled'}${enabled && !wasLan ? ' (+ rebinding to 0.0.0.0)' : ''}`);
-
-    sendJson(res, 200, { ok: true, allowRemotePanel: enabled, lanAccess: state.lanAccess });
-    if (enabled && !wasLan) {
-      setTimeout(() => rebind().catch((err) => log(`rebind failed: ${err.message}`)), 150);
-    }
-    return;
   }
 
   if (route === '/api/auth/password' && req.method === 'POST') {
@@ -811,10 +769,6 @@ const MIME = {
 };
 
 function serveStatic(req, res, url) {
-  if (!panelAllowed(req)) {
-    res.writeHead(403, { 'content-type': 'text/plain; charset=utf-8' });
-    return res.end('panel is loopback-only; enable remote panel access in the panel, or use /v1/*');
-  }
   const rel = url.pathname === '/' ? 'index.html' : url.pathname.replace(/^\/+/, '');
   const target = path.join(PANEL_DIR, rel);
   if (!target.startsWith(PANEL_DIR) || !fs.existsSync(target) || !fs.statSync(target).isFile()) {
@@ -831,13 +785,8 @@ function serveStatic(req, res, url) {
 
 /**
  * 登录页。单独走一条路径，不参与认证 —— 否则进不去。
- * 同样只对回环开放（局域网访问只放 /v1）。
  */
 function serveLogin(req, res) {
-  if (!panelAllowed(req)) {
-    res.writeHead(403, { 'content-type': 'text/plain; charset=utf-8' });
-    return res.end('panel is loopback-only; enable remote panel access in the panel, or use /v1/*');
-  }
   const target = path.join(PANEL_DIR, 'login.html');
   if (!fs.existsSync(target)) {
     res.writeHead(500, { 'content-type': 'text/plain; charset=utf-8' });

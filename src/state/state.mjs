@@ -38,7 +38,6 @@ const defaults = (port = DEFAULT_PORT) => ({
   model: '',
   maxConcurrency: 2,
   timeoutSec: 240,
-  allowRemotePanel: false,
   panelPassword: DEFAULT_PANEL_PASSWORD,
   panelSecret: crypto.randomBytes(32).toString('hex'),
   createdAt: new Date().toISOString(),
@@ -55,7 +54,6 @@ function applyEnv(state) {
   }
   if (process.env.AGY_API_KEY) state.apiKey = process.env.AGY_API_KEY;
   if (process.env.DEFAULT_MODEL) state.model = process.env.DEFAULT_MODEL;
-  if (process.env.ALLOW_REMOTE_PANEL === '1') state.allowRemotePanel = true;
   return state;
 }
 

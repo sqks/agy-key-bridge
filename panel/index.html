@@ -156,12 +156,10 @@
         <div class="card">
           <div class="card-head">
             <div>
-              <div class="card-title">面板远程访问</div>
-              <div class="hint">默认只有本机能打开面板；打开后任何能连到这台机器的地方都能访问（仍需密码）</div>
+              <div class="card-title">面板密码</div>
+              <div class="hint">任何能连到这台机器的地方都能打开登录页，密码是唯一门槛</div>
             </div>
-            <label class="switch"><input type="checkbox" id="remotePanelToggle" /><span class="sl"></span></label>
           </div>
-          <div class="hint" id="remotePanelInfo" style="margin-top:10px">—</div>
           <div class="row" style="margin-top:14px">
             <input type="password" id="pwdCurrent" placeholder="当前密码" style="width:150px" />
             <input type="password" id="pwdNext" placeholder="新密码（至少 6 位）" style="width:180px" />
@@ -172,7 +170,7 @@
 
         <div class="card">
           <div class="card-head">
-            <div><div class="card-title">局域网访问</div><div class="hint">只开放 /v1；面板是否可达看上面那个开关</div></div>
+            <div><div class="card-title">局域网访问</div><div class="hint">控制监听地址：关=只监听 127.0.0.1，开=监听 0.0.0.0</div></div>
             <label class="switch"><input type="checkbox" id="lanToggle" /><span class="sl"></span></label>
           </div>
           <div class="hint" id="lanInfo" style="margin-top:10px">—</div>
