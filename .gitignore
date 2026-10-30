@@ -1,0 +1,15 @@
+# 运行时数据：每台机器各自生成，含密钥与日志，绝不入库
+data/
+
+# 依赖与缓存
+node_modules/
+__pycache__/
+*.pyc
+
+# 启动器与打包产物（按机器路径生成）
+launcher.py
+script/launcher.py
+agy-bridge.tar.gz
+
+# 通用日志（保险起见，任何位置的 .log 都不提交）
+*.log

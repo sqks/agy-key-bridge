@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AGY Bridge</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">AG</div>
+      <div>
+        <div class="brand-name">AGY Bridge</div>
+        <div class="brand-sub">Antigravity 中转</div>
+      </div>
+    </div>
+    <nav class="nav" id="nav">
+      <button data-page="overview" class="on"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>概览</button>
+      <button data-page="accounts"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="5.5" r="2.6"/><path d="M2.6 13.4c.7-2.5 2.8-3.9 5.4-3.9s4.7 1.4 5.4 3.9"/></svg>账号</button>
+      <button data-page="models"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 8h3l1.6-4 2.4 8 1.6-4H14"/></svg>模型与额度</button>
+      <button data-page="relay"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6 3H3.5A1.5 1.5 0 0 0 2 4.5v7A1.5 1.5 0 0 0 3.5 13H6"/><path d="M10 11l3-3-3-3"/><path d="M13 8H6"/></svg>接入</button>
+      <button data-page="logs"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 3h10M3 8h10M3 13h6"/></svg>日志</button>
+    </nav>
+    <div class="side-foot">
+      <div>直连 daily-cloudcode-pa</div>
+      <div><code id="footVer">v2</code></div>
+    </div>
+  </aside>
+
+  <main>
+    <header class="topbar">
+      <span class="pill" id="topState"><span class="dot"></span>…</span>
+      <span class="who" id="topAccount">—</span>
+      <div class="spacer"></div>
+      <button class="btn ghost" id="refreshBtn">刷新</button>
+      <button class="btn ghost" id="logoutBtn">退出</button>
+    </header>
+
+    <div class="content">
+      <section class="page on" id="page-overview">
+        <div class="metrics">
+          <div class="metric"><div class="k">反向代理</div><div class="v small" id="mProxy">—</div><div class="n" id="mProxyNote">—</div></div>
+          <div class="metric"><div class="k">默认模型</div><div class="v small" id="mModel">—</div><div class="n" id="mModelNote">—</div></div>
+          <div class="metric"><div class="k">账号</div><div class="v" id="mAccounts">—</div><div class="n" id="mAccountsNote">—</div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div><div class="card-title">反向代理</div><div class="hint" id="proxyHint">关闭后本地 API 一律 503</div></div>
+            <label class="switch"><input type="checkbox" id="proxyToggle" /><span class="sl"></span></label>
+          </div>
+          <div class="row"><span class="k">API Key</span><code class="line" id="apiKey">—</code><button class="btn" id="copyKey">复制</button><button class="btn ghost" id="rotateKey">换钥</button></div>
+          <div class="row"><span class="k">Base URL</span><code class="line" id="baseUrl">—</code><button class="btn" id="copyBase">复制</button></div>
+          <div class="row"><span class="k">跨机</span><code class="line" id="extBase">—</code><button class="btn" id="copyExt">复制</button></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div><div class="card-title">默认模型</div><div class="hint">agent 传来的任意模型名都会落到这里</div></div>
+            <button class="btn ghost" id="reloadModels">刷新清单</button>
+          </div>
+          <div class="row"><select class="grow" id="modelSelect"></select></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div><div class="card-title">开机启动</div><div class="hint">pythonw 无窗口拉起，与手动启动互不影响</div></div>
+            <label class="switch"><input type="checkbox" id="autostartToggle" /><span class="sl"></span></label>
+          </div>
+          <div class="hint" id="autostartInfo" style="margin-top:10px">—</div>
+        </div>
+      </section>
+
+      <section class="page" id="page-accounts">
+        <h2>账号池</h2>
+        <p class="lede">每个账号一份 refresh_token，桥接层自己换 token。请求优先用「当前」账号，失败自动换下一个。</p>
+
+        <div class="card">
+          <div class="card-title" style="margin-bottom:12px">添加账号</div>
+          <div class="row">
+            <input class="grow" type="text" id="newToken" placeholder="粘贴 refresh_token（1//0e…）" />
+            <input type="text" id="newLabel" placeholder="备注（可选）" style="width:150px" />
+            <button class="btn primary" id="addAccount">添加</button>
+          </div>
+          <div class="row" style="margin-top:12px">
+            <button class="btn primary" id="startLogin">浏览器授权登录</button>
+            <button class="btn" id="startLoginOob">登录（页面给码）</button>
+            <span class="hint" style="margin:0">第一种自动回调；第二种 Google 页面直接显示一段码</span>
+          </div>
+          <div id="loginBox" style="display:none;margin-top:14px;border-top:1px solid var(--border);padding-top:14px">
+            <div class="row"><span class="k">授权链接</span><code class="line" id="loginUrl">—</code><button class="btn" id="copyLoginUrl">复制</button><button class="btn" id="openLogin">打开</button></div>
+            <div class="hint" id="loginNote" style="margin-top:8px">—</div>
+            <div class="row" style="margin-top:10px">
+              <input class="grow" type="text" id="loginCode" placeholder="回调打不回来时：把浏览器地址栏整条 URL（含 code=）或只要 code 粘贴到这里" />
+              <button class="btn" id="submitLoginCode">提交</button>
+            </div>
+            <div class="row" style="margin-top:8px"><button class="btn ghost" id="cancelLogin">取消</button></div>
+          </div>
+          <div class="hint" style="margin-top:12px">
+            也可以粘贴 refresh_token（从凭据管理器 <code>gemini:antigravity</code> 里取）。保存后
+            <code>data/accounts.json</code> 有明文 refresh_token，别提交。
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head" style="margin-bottom:10px">
+            <div class="card-title">已添加</div>
+            <button class="btn ghost" id="refreshQuotaAll">刷新全部额度</button>
+          </div>
+          <table>
+            <thead><tr><th>账号</th><th>状态</th><th>最低剩余</th><th>过期</th><th style="text-align:right">操作</th></tr></thead>
+            <tbody id="accountRows"><tr><td colspan="5" class="empty">加载中…</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="page" id="page-models">
+        <h2>模型与额度</h2>
+        <p class="lede">额度来自上游 fetchAvailableModels，按当前账号返回。100% 是满额。</p>
+        <div class="card">
+          <div class="card-head" style="margin-bottom:10px">
+            <div class="card-title">当前账号额度</div>
+            <button class="btn ghost" id="quotaRefresh">重新查询</button>
+          </div>
+          <table>
+            <thead><tr><th>模型</th><th>剩余</th><th>重置</th><th style="text-align:right">默认</th></tr></thead>
+            <tbody id="quotaRows"><tr><td colspan="4" class="empty">加载中…</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="page" id="page-relay">
+        <h2>接入配置</h2>
+        <p class="lede">同一个端点，OpenAI 与 Anthropic 两种协议共用一把 key。</p>
+        <div class="card">
+          <div class="row"><span class="k">dsh</span><code class="line" id="rDsh">—</code><button class="btn" data-copy="dsh">复制</button></div>
+          <div class="row"><span class="k">Claude Code</span><code class="line" id="rClaude">—</code><button class="btn" data-copy="claude">复制</button></div>
+          <div class="row"><span class="k">Kimi / 通用</span><code class="line" id="rOpenai">—</code><button class="btn" data-copy="openai">复制</button></div>
+          <div class="row"><span class="k">跨机</span><code class="line" id="rExt">—</code><button class="btn" data-copy="ext">复制</button></div>
+          <div class="row" style="margin-top:14px">
+            <button class="btn" id="exportCfg">导出接入配置（JSON）</button>
+            <span class="hint" style="margin:0">含 provider / baseURL / apiKey / model，可直接存档</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <div><div class="card-title">出网代理</div><div class="hint">服务器连不上 Google 时填这里，例如 http://127.0.0.1:7890</div></div>
+            <button class="btn" id="saveProxy">保存</button>
+          </div>
+          <div class="row"><input class="grow" type="text" id="proxyUrl" placeholder="留空 = 直连，或读 HTTPS_PROXY / ALL_PROXY" /></div>
+          <div class="hint" id="proxyInfo" style="margin-top:8px">—</div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div><div class="card-title">局域网访问</div><div class="hint">只开放 /v1；面板和 /api 永远只认本机</div></div>
+            <label class="switch"><input type="checkbox" id="lanToggle" /><span class="sl"></span></label>
+          </div>
+          <div class="hint" id="lanInfo" style="margin-top:10px">—</div>
+        </div>
+      </section>
+
+      <section class="page" id="page-logs">
+        <h2>请求日志</h2>
+        <p class="lede">最近 40 次调用。</p>
+        <div class="card">
+          <div class="card-head" style="margin-bottom:10px">
+            <div class="card-title">记录</div>
+            <button class="btn ghost" id="clearLog">清空</button>
+          </div>
+          <table>
+            <thead><tr><th>时间</th><th>类型</th><th>模型</th><th>工具</th><th>耗时</th><th>字符</th><th style="text-align:right">结果</th></tr></thead>
+            <tbody id="logRows"><tr><td colspan="7" class="empty">暂无请求</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
